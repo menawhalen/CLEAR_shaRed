@@ -256,8 +256,3 @@ dbDisconnect(con)
 cat(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "- Script finished executing and disconnected cleanly.\n")
 
 
-d<-dbGetQuery(con, "SELECT MAX(timestamp) AS most_recent_timestamp FROM Airgradient_air_history")
-e<-dbGetQuery(con, "SELECT * FROM Airgradient_trigger_pulls")
-Sys.getenv("LUC_CLEAR_AIRGRADIENT_API_KEY")
-
-
