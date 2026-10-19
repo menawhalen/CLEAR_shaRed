@@ -1,4 +1,4 @@
-###Writing the code for the 24 hour trigger to update sensor_information and air_history tables daily (adapted from the code for a previous 24 hour trigger)
+##Unlike the PurpleAir and AirGradient APIs, the Clarity API does not require an API key, only the corresponding URL.
 
 library(tidyverse)
 library(readxl)
