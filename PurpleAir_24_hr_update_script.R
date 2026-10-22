@@ -1,5 +1,6 @@
 ###Writing the code for the 24 hour trigger to update sensor_infomation and air_history tables daily (adapted from the code for a previous 24 hour trigger)
 
+
 library(tidyverse)
 library(readxl)
 library(httr)
@@ -39,7 +40,6 @@ cat(
   "- Retrieved active sensors\n"
 )
 
-
 ### 3.Fetch Live API metadata Timestamps and compare to metadata timestamps in database
 
 api_sensors_all <- get_sensors_data(x=as.integer(sensoridsvec), fields = c("last_seen"))
@@ -73,9 +73,19 @@ for (i in sensoridsvec) {
       
       updated_sensors <- c(updated_sensors, i) 
       sensors_pulled_log <- c(sensors_pulled_log, as.character(i))}
+    
+    if (db_last_seen < date_threshold){
+      
+      query4 <- "UPDATE Purpleair_sensor_information SET sensor_activity_status= 'Inactive' WHERE sensor_index = ?"
+      dbExecute(con, query4, params=list(i))
+      
+      updated_sensors <- c(updated_sensors, i) 
+      sensors_pulled_log <- c(sensors_pulled_log, as.character(i))} #Covers the case in which a sensor that was previously active stops reporting data for more than 30 days, to avoid pulling historical data for such sensors)
+      
+      
+    }
 
   }
-}
 
 
 cat(
@@ -165,7 +175,6 @@ if (length(updated_sensors) > 0) {
 ###6. Disconnect cleanly
 dbDisconnect(con)
 cat(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "- Script finished executing and disconnected cleanly.\n")
-
 
 
 
