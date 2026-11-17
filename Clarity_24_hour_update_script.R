@@ -150,42 +150,7 @@ for (i in sensoridsvec) {
   sensor_list_string <- paste(sensors_pulled_log, collapse = ", ")}
 
 
-#5. Updating sensor metadata with new last_seen timestamps based on the updated air_history table
-
-clarity_sensor_information<-dbGetQuery(con, "SELECT * FROM Clarity_sensor_information")
-clarity_air_history<-dbGetQuery(con, "SELECT datasourceid, time FROM Clarity_air_history")
-max(clarity_air_history$time)
-
-current_last_seen_times<-clarity_air_history%>%
-group_by(datasourceid)%>%
-summarize(most_recent_timestamp=max(time))
-  
-  for (i in clarity_sensor_information$datasourceid) {
-    query1 <- dbGetQuery(con, "SELECT last_seen FROM Clarity_sensor_information WHERE datasourceid = ?", params = list(i)) #extracts the currently documented last_seen timestamp for each sensor and assigns it as db_last_seen
-    db_last_seen <- if(nrow(query1) > 0) query1$last_seen else NA
-    
-    api_row <- current_last_seen_times %>% 
-      filter(datasourceid == i)%>%
-      select(most_recent_timestamp)
-    
-    if (nrow(api_row) > 0) {
-      api_last_seen <- api_row$most_recent_timestamp} #assigns the current last_seen times for each sensor based on the updated air_history table
-      
-      if (is.na(db_last_seen) || db_last_seen < api_last_seen) {
-        
-        position=which(clarity_sensor_information$datasourceid == i) 
-        j=current_last_seen_times$datasourceid[position]
-        
-        query2 <- "UPDATE Clarity_sensor_information SET last_seen = ? WHERE datasourceid = ?"
-        
-        dbExecute(con, query2, params = list(as.character(api_last_seen), j))
-        
-
-      }
-  }
-
-
-#6. Update trigger_pulls table 
+#5. Update trigger_pulls table 
 
 trigger_log_df <- data.frame(
   pull_timestamp    = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
@@ -208,6 +173,9 @@ New_pull_id_integer<-as.numeric(New_pull_id$pull_id[1])
 update_clean_with_pull_id<-New_historical_data%>%
   mutate(pull_id=New_pull_id_integer)%>%
   distinct(datasourceid, time, .keep_all=TRUE)
+
+#6. Append historical data to air_history table
+
 
 if(nrow(update_clean_with_pull_id) > 0){
   dbWriteTable(
@@ -234,9 +202,41 @@ if(nrow(update_clean_with_pull_id) > 0){
   
 } 
 
-#7. Disconnect cleanly
+#7. Updating sensor metadata with new last_seen timestamps based on the updated air_history table
+
+clarity_sensor_information<-dbGetQuery(con, "SELECT * FROM Clarity_sensor_information")
+clarity_air_history<-dbGetQuery(con, "SELECT datasourceid, time FROM Clarity_air_history")
+
+current_last_seen_times<-clarity_air_history%>%
+  group_by(datasourceid)%>%
+  summarize(most_recent_timestamp=max(time))
+
+for (i in clarity_sensor_information$datasourceid) {
+  query1 <- dbGetQuery(con, "SELECT last_seen FROM Clarity_sensor_information WHERE datasourceid = ?", params = list(i)) #extracts the currently documented last_seen timestamp for each sensor and assigns it as db_last_seen
+  db_last_seen <- if(nrow(query1) > 0) query1$last_seen else NA
+  
+  api_row <- current_last_seen_times %>% 
+    filter(datasourceid == i)%>%
+    select(most_recent_timestamp)
+  
+  if (nrow(api_row) > 0) {
+    api_last_seen <- api_row$most_recent_timestamp} #assigns the current last_seen times for each sensor based on the updated air_history table
+  
+  if (is.na(db_last_seen) || db_last_seen < api_last_seen) {
+    
+    position=which(clarity_sensor_information$datasourceid == i) 
+    j=current_last_seen_times$datasourceid[position]
+    
+    query2 <- "UPDATE Clarity_sensor_information SET last_seen = ? WHERE datasourceid = ?"
+    
+    dbExecute(con, query2, params = list(as.character(api_last_seen), j))
+    
+    
+  }
+}
+
+#8. Disconnect cleanly
 
 dbDisconnect(con)
 cat(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "- Script finished executing and disconnected cleanly.\n")
-
 
