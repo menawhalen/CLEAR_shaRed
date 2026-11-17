@@ -43,7 +43,7 @@ cat(
 
 ### 4. Fetch and Process Historical Data from the most recent time in the database until the current system time
 
-#Wrap historical steps in an IF block to prevent errors if 0 sensors need updates
+#Wrap historical steps in an IF block to prevent errors if 0 sensors need updates (this would never happen in practice, but just to be thorough and account for edge cases)
 
 latest_time <- DBI::dbGetQuery(
   con,
