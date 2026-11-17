@@ -8,7 +8,7 @@ library(DBI)
 library(odbc)
 library(PurpleAir)
 
-# 1. Connect to server
+# 1. Connect to server 
 
 cat(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "- Script began executing.\n")
 
@@ -143,7 +143,7 @@ for (i in sensoridsvec) {
         " with status ", status_code(response)
       )
       
-      # Move to the next chunk
+      # Iteratively move to and download the next chunk of 50000 observations until no more historical data remains
       chunk_start <- chunk_end
       next
     }
