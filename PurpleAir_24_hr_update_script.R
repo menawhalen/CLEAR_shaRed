@@ -43,9 +43,6 @@ cat(
 
 api_sensors_all <- get_sensors_data(x=as.integer(sensoridsvec), fields = c("last_seen"))
 
-updated_sensors <- c() 
-sensors_pulled_log<-c()
-
 for (i in sensoridsvec) {
   query1 <- dbGetQuery(con, "SELECT last_seen FROM Purpleair_sensor_information WHERE sensor_index = ?", params = list(i))
   date_threshold <- dbGetQuery(con, "SELECT DATEADD(day, -30, CAST(GETDATE() AS DATE))")
@@ -79,7 +76,7 @@ for (i in sensoridsvec) {
       dbExecute(con, query4, params=list(i))
       
       updated_sensors <- c(updated_sensors, i) 
-      sensors_pulled_log <- c(sensors_pulled_log, as.character(i))} #Covers the case in which a sensor that was previously active stops reporting data for more than 30 days, to avoid pulling historical data for such sensors)
+      } #Covers the case in which a sensor that was previously active stops reporting data for more than 30 days, to avoid pulling historical data for such sensors
       
     }
   }
@@ -138,7 +135,12 @@ if (length(updated_sensors) > 0) {
     nrow(update_clean)
     #Notice that I do not append the new historical data to Purpleair_air_history yet
     
-    sensor_list_string <- paste(sensors_pulled_log, collapse = ", ")
+    sensors_pulled_log<-c()
+    for (i in unique(update_clean$sensor_index)){
+      if(i %in% sensoridsvec){
+        sensors_pulled_log <- c(sensors_pulled_log, as.character(i)) 
+        sensor_list_string <- paste(sensors_pulled_log, collapse = ", ")}
+    }
     
     ###5. Add metadata about the new historical pulls to the trigger_pulls table
     
