@@ -186,9 +186,11 @@ cat(
 
 
 sensors_pulled_log<-c()
-for (i in sensoridsvec) {
-  sensors_pulled_log <- c(sensors_pulled_log, as.character(i)) 
-  sensor_list_string <- paste(sensors_pulled_log, collapse = ", ")}
+for (i in unique(New_airgradient_historical_data$locationID)){
+  if(i %in% sensoridsvec){
+    sensors_pulled_log <- c(sensors_pulled_log, as.character(i)) 
+    sensor_list_string <- paste(sensors_pulled_log, collapse = ", ")}
+}
 
 
 #5. Update trigger_pulls table 
