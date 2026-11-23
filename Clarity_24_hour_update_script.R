@@ -145,9 +145,11 @@ New_historical_data<-New_historical_data%>%
 select(c(datasourceid, sensor_name, time, record_id, relhumidinternalindividual, no2concindividual_raw, no2concindividual_value, pm2_5concmassindividual_raw, pm2_5concmassindividual_value, pm2_5concnumindividual_raw, pm2_5concnumindividual_value, temperatureinternalindividual))
 
 sensors_pulled_log<-c()
-for (i in sensoridsvec) {
-  sensors_pulled_log <- c(sensors_pulled_log, as.character(i)) 
-  sensor_list_string <- paste(sensors_pulled_log, collapse = ", ")}
+for (i in unique(New_historical_data$datasourceid)){
+  if(i %in% sensoridsvec){
+    sensors_pulled_log <- c(sensors_pulled_log, as.character(i)) 
+    sensor_list_string <- paste(sensors_pulled_log, collapse = ", ")}
+}
 
 
 #5. Update trigger_pulls table 
@@ -239,4 +241,5 @@ for (i in clarity_sensor_information$datasourceid) {
 
 dbDisconnect(con)
 cat(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "- Script finished executing and disconnected cleanly.\n")
+
 
