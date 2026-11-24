@@ -207,11 +207,16 @@ if(nrow(update_clean_with_pull_id) > 0){
 #7. Updating sensor metadata with new last_seen timestamps based on the updated air_history table
 
 clarity_sensor_information<-dbGetQuery(con, "SELECT * FROM Clarity_sensor_information")
+
+clarity_sensor_information<-clarity_sensor_information%>%
+arrange(datasourceid)
+
 clarity_air_history<-dbGetQuery(con, "SELECT datasourceid, time FROM Clarity_air_history")
 
 current_last_seen_times<-clarity_air_history%>%
   group_by(datasourceid)%>%
-  summarize(most_recent_timestamp=max(time))
+  summarize(most_recent_timestamp=max(time))%>%
+  arrange(datasourceid)
 
 for (i in clarity_sensor_information$datasourceid) {
   query1 <- dbGetQuery(con, "SELECT last_seen FROM Clarity_sensor_information WHERE datasourceid = ?", params = list(i)) #extracts the currently documented last_seen timestamp for each sensor and assigns it as db_last_seen
