@@ -247,11 +247,16 @@ cat(
 #Unlike the Purpleair update script, this script and the Clarity update script updates the metadata AFTER updating the historical data, because the last_seen field is not native to the AirGradient or Clarity APIs. 
 
 Airgradient_sensor_information<-dbGetQuery(con, "SELECT * FROM Airgradient_sensor_information")
+
+Airgradient_sensor_information<-Airgradient_sensor_information%>%
+arrange(locationID)
+
 Airgradient_air_history<-dbGetQuery(con, "SELECT locationID, timestamp FROM Airgradient_air_history")
 
 current_last_seen_times<-Airgradient_air_history%>%
   group_by(locationID)%>%
-  summarize(most_recent_timestamp=max(timestamp))
+  summarize(most_recent_timestamp=max(timestamp))%>%
+  arrange(locationID) #The locationID column is arranged in alphabetical order in both the sensor_information table and the current_last_seen_times table to ensure that indexing matches for metadata updates
 
 for (i in Airgradient_sensor_information$locationID) {
   query1 <- dbGetQuery(con, "SELECT last_seen FROM Airgradient_sensor_information WHERE locationID = ?", params = list(i)) #extracts the currently documented last_seen timestamp for each sensor and assigns it as db_last_seen
